@@ -12,7 +12,7 @@ https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ to
 
 2. Setup a **PROFILE** in `./config/` taking an example from `configs/config.example.yaml` as for eg: `configs/user.yaml`
 
-3. Replace the %VARIABLE% in there with the right ones
+3. Replace the *%VARIABLE%* in there with the right ones
 
 4. Add a `local.sh` at the top dir with your profile name to gpg key in bash hashtable, i.e:
 
