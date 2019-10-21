@@ -11,14 +11,15 @@ WEB=""
 
 [[ -e local.sh ]] && source local.sh
 
-[[ -z ${PROFILE} ]] && { echo "I need a profile as argument or -a for everything"; exit 1 ;}
-[[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
-[[ -z ${PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
-
+[[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
 [[ -z ${PROFILE} ]] && {
-    echo "I need a profile"
-	exit 1
+    echo "I need a profile as argument or -a for everything";
+    echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
+    exit 1
 }
+[[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
+
+[[ -d ${WEB}]] || mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
 IC=$(readlink -f $(dirname $0)/configs/${PROFILE}.yaml )
@@ -26,25 +27,27 @@ IC=$(readlink -f $(dirname $0)/configs/${PROFILE}.yaml )
 	echo "${IC} don't exist"
 	exit
 }
-PROFILE_DIR=${SD}/profiles/${PROFILE}
 
 function recreate() {
-	echo "${PROFILE}: $(date) :: start"
-	[[ -e ${PROFILE_DIR}/terraform.tfstate ]] && {
-		${OS4_BINARY} destroy cluster --dir ${PROFILE_DIR} --log-level=error
-		rm -rf ${PROFILE_DIR}
-	}
-	mkdir -p ${PROFILE_DIR}
+    local profile=$1
+    local profile_dir=${SD}/profiles/${profile}
 
-	cp ${IC} ${PROFILE_DIR}/install-config.yaml
-	${OS4_BINARY} create cluster --dir ${PROFILE_DIR} --log-level=error
-	echo "${PROFILE}: $(date) :: stop"
+	echo "${profile}: $(date) :: start"
+	[[ -e ${profile_dir}/terraform.tfstate ]] && {
+		${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error
+		rm -rf ${profile_dir}
+	}
+	mkdir -p ${profile_dir}
+
+	cp ${IC} ${profile_dir}/install-config.yaml
+	${OS4_BINARY} create cluster --dir ${profile_dir} --log-level=error
+	echo "${profile}: $(date) :: stop"
 }
 
 function encrypt() {
-	user=$1
-	profile_dir=${SD}/profiles/${user}
-	gpgemail=${PROFILE_TO_GPG[$user]}
+	local user=$1
+	local profile_dir=${SD}/profiles/${user}
+	local gpgemail=${PROFILE_TO_GPG[$user]}
 
 	if [[ -n ${gpgemail} ]];then
 		tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
@@ -52,14 +55,14 @@ function encrypt() {
 		gpg --yes --output ${WEB}/tmp/${user}.webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
 		gpg --yes --output ${WEB}/tmp/${user}.kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
     else
-        echo "${PROFILE}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
+        echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
 	fi
 }
 
 if [[ ${PROFILE} == "-a" ]];then
-    for PROFILE in ${!PROFILE_TO_GPG[@]};do
-        echo recreate # TODO(chmouel):remove global variables
-        echo encrypt ${PROFILE}
+    for profile in ${!PROFILE_TO_GPG[@]};do
+        recreate ${profile}
+        encrypt ${profile}
     done
 fi
 
@@ -67,5 +70,5 @@ fi
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
 }
 
-recreate
+recreate ${PROFILE}
 encrypt ${PROFILE}

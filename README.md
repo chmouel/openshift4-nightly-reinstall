@@ -18,7 +18,7 @@ https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ to
   - `%REGISTRY_TOKEN%`: the registry token you get from https://try.openshift.com/
   - `%SSH_KEY%` is your public SSH key.
 
-* Add a `local.sh` at the top dir with your profile name to gpg key in bash hashtable, i.e:
+* Add a `local.sh` at the top dir with your profile name to gpg key in bash hashtable and the WEB variable pointing to your local apache root (or subdir), i.e:
 
 ```bash
 declare -A PROFILE_TO_GPG=(
