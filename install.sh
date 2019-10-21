@@ -19,7 +19,7 @@ WEB=""
 }
 [[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
 
-[[ -d ${WEB}]] || mkdir -p ${WEB}
+[[ -d ${WEB} ]] || mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
 IC=$(readlink -f $(dirname $0)/configs/${PROFILE}.yaml )
