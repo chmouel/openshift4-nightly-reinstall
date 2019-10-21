@@ -12,7 +12,11 @@ https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ to
 
 * Setup a **PROFILE** in `./config/` taking an example from `configs/config.example.yaml` as for eg: `configs/user.yaml`
 
-* Replace the *%VARIABLE%* in there with the right ones
+* Replace the *%VARIABLE%* in there with the right ones.
+
+  - `%CLUSTER_NAME%`: Whatever name you want to give to that cluster, (or `sed "${RANDOM}q;d" /usr/share/dict/words`)
+  - `%REGISTRY_TOKEN%`: the registry token you get from https://try.openshift.com/
+  - `%SSH_KEY%` is your public SSH key.
 
 * Add a `local.sh` at the top dir with your profile name to gpg key in bash hashtable, i.e:
 
