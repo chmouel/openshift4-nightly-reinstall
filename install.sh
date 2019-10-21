@@ -4,18 +4,16 @@ set -e
 cd $(readlink -f $(dirname $(readlink -f $0)))
 OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
 
-WEB=/home/www/chmouel.com/
-PROFILE=${1:-chmouel}
+PROFILE=${1}
 
-declare -A PROFILE_TO_GPG=(
-    ["vincent"]="vincent@demeester.fr"
-    ["chmouel42"]="chmouel@chmouel.com"
-    ["chmouel"]="chmouel@chmouel.com"
-    ["hrishi"]="hshinde@redhat.com"
-    ["nikhil"]="nikthoma@redhat.com"
-)
+declare -A PROFILE_TO_GPG
+WEB=""
 
 [[ -e local.sh ]] && source local.sh
+
+[[ -z ${PROFILE} ]] && { echo "I need a profile as argument or -a for everything"; exit 1 ;}
+[[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
+[[ -z ${PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
 
 [[ -z ${PROFILE} ]] && {
     echo "I need a profile"
@@ -58,9 +56,16 @@ function encrypt() {
 	fi
 }
 
-#for x in nikhil vincent chmouel sunil hrishi;do
-#	encrypt ${x}
-#done
+if [[ ${PROFILE} == "-a" ]];then
+    for PROFILE in ${!PROFILE_TO_GPG[@]};do
+        echo recreate # TODO(chmouel):remove global variables
+        echo encrypt ${PROFILE}
+    done
+fi
+
+[[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
+    echo "WARNING: No GPG key association has been setup for ${PROFILE}"
+}
 
 recreate
 encrypt ${PROFILE}
