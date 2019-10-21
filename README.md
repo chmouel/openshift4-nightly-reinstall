@@ -1,10 +1,10 @@
 # OpenShift Install
 
-## PREREQS
+## Pre-Requirements
 
 A public web server setup, gpg setup.
 
-## Step
+## Steps
 
 1. Download and extract the openshift installer from
 https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ to
@@ -31,9 +31,9 @@ WEB=/var/www/html/
 
 7. Setup a cron for that profile to run every night (ask for the most convenient user TZ when she/he is not working) :
 
-`39 06 * * * $PATH_TO/os4-build/install.sh user >>/tmp/install.log`
+`00 06 * * * $PATH_TO/os4-build/install.sh user >>/tmp/install.log`
 
-8. Let the user setup a function to resync its cluster key by while sipping her/his latté, i.e:
+8. Let the user setup a function to resync its cluster key by while taking a tiny sip of her/his latté ☕️, i.e:
 
 ```bash
 function sync-os4() {
