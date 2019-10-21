@@ -37,7 +37,7 @@ WEB=/var/www/html/
 
 `00 06 * * * $PATH_TO/openshift4-nightly-reinstall/install.sh user >>/tmp/install.log`
 
-* Let the user setup a function to resync its cluster key by while taking a tiny sip of her/his latté ☕️, i.e:
+* Let the user setup a function to resync its cluster key while emjoying a tiny sip of her/his double expresso latté ☕️, i.e:
 
 ```bash
 function sync-os4() {
