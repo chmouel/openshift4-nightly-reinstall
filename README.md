@@ -35,7 +35,7 @@ WEB=/var/www/html/
 
 * Setup a cron for that profile to run every night (ask for the most convenient user TZ when she/he is not working) :
 
-`00 06 * * * $PATH_TO/os4-build/install.sh user >>/tmp/install.log`
+`00 06 * * * $PATH_TO/openshift4-nightly-reinstall/install.sh user >>/tmp/install.log`
 
 * Let the user setup a function to resync its cluster key by while taking a tiny sip of her/his latté ☕️, i.e:
 
