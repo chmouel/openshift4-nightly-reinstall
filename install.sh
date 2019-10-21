@@ -9,7 +9,9 @@ PROFILE=${1}
 declare -A PROFILE_TO_GPG
 WEB=""
 
-[[ -e local.sh ]] && source local.sh
+[[ -e local.sh ]]  || { echo "Could not find your local.sh which you need to setup"; exit 1 ;}
+
+source local.sh
 
 [[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
 [[ -z ${PROFILE} ]] && {
