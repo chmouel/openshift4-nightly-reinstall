@@ -28,7 +28,7 @@ declare -A PROFILE_TO_GPG=(
 WEB=/var/www/html/
 ```
 
-* Import the GPG key, `gpg --import gpgkey@user.com.pubkey.asc` or `gpg
+* Ask the user for her/his GPG key and import it: `gpg --import gpgkey@user.com.pubkey.asc` or `gpg
    --recv-keys gpgkey@user.com` if it's uploaded on the public GPG servers.
 
 * Trust the key : https://stackoverflow.com/a/17130637/145125
