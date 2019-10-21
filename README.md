@@ -10,7 +10,7 @@ A public web server setup, gpg setup.
 https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/ to
 `./binaries/openshift-install`
 
-2. Setup a **PROFILE** in `./config/` taking an example from `configs/config.yaml.example` as for eg: `configs/user.yaml`
+2. Setup a **PROFILE** in `./config/` taking an example from `configs/config.example.yaml` as for eg: `configs/user.yaml`
 
 3. Replace the %VARIABLE% in there with the right ones
 
