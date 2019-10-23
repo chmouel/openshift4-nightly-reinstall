@@ -24,15 +24,16 @@ source local.sh
 [[ -d ${WEB} ]] || mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
-IC=$(readlink -f $(dirname $0)/configs/${PROFILE}.yaml )
-[[ -e ${IC} ]] || {
-	echo "${IC} don't exist"
-	exit
-}
 
 function recreate() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
+
+	IC=$(readlink -f $(dirname $0)/configs/${profile}.yaml )
+	[[ -e ${IC} ]] || {
+		echo "${IC} don't exist"
+		exit
+	}
 
 	echo "${profile}: $(date) :: start"
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
