@@ -41,7 +41,9 @@ WEB=/var/www/html/
 
 ```bash
 function sync-os4() {
+    local profile=profilename
     curl -s yourwebserver.com/${profile}.kubeconfig.gpg | gpg --decrypt > ${HOME}/.kube/config.os4
     export KUBECONFIG=${HOME}/.kube/config.os4
+    oc version
 }
 ```
