@@ -47,3 +47,42 @@ function sync-os4() {
     oc version
 }
 ```
+
+## Web Access
+
+Web access is available with :
+
+```shell
+$ curl -s yourwebserver.com/${profile}.kubeadmin.password.gpg |gpg --decrypt
+```
+
+With the full url to access :
+
+```shell
+curl -s yourwebserver.comf/tmp/${profile}.webaccess.gpg |gpg --decrypt
+```
+
+## User creation automations
+
+You can automatically add new users to your clusters, so you don't have to have a different webaccess every time :
+
+
+1. Create first an htpasswd-file with your username/passwd using the [htpasswd](https://httpd.apache.org/docs/current/programs/htpasswd.html) utility :
+   `$ htpasswd -c htpasswd-file username`
+
+2. Add this function to your zsh function and call it from sync-os4 function
+``` shell
+function os4_add_htpasswd_auth() {
+    oc create secret generic htpasswd-secret --from-file=htpasswd=htpasswd-file -n openshift-config
+    oc patch oauth cluster -n openshift-config --type merge --patch "spec:
+  identityProviders:
+  - htpasswd:
+      fileData:
+        name: htpasswd-secret
+    mappingMethod: claim
+    name: htpasswd
+    type: HTPasswd
+"
+    # oc adm policy add-cluster-role-to-user cluster-admin ${your_username_used_to_login}
+}
+```
