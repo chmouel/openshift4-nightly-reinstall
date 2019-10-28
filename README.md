@@ -73,7 +73,7 @@ You can automatically add new users to your clusters, so you don't have to have 
    $ htpasswd -c /path/to/htpasswd username
    ```
 
-2. Add this function to your zsh function and call it from sync-os4 function
+2. Add this function to your zshrc and call it from sync-os4 function
 ``` shell
 function os4_add_htpasswd_auth() {
     oc create secret generic htpasswd-secret --from-file=htpasswd=/path/to/htpasswd -n openshift-config
