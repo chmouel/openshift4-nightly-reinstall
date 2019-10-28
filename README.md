@@ -68,12 +68,15 @@ You can automatically add new users to your clusters, so you don't have to have 
 
 
 1. Create first an htpasswd-file with your username/passwd using the [htpasswd](https://httpd.apache.org/docs/current/programs/htpasswd.html) utility :
-   `$ htpasswd -c htpasswd-file username`
+
+   ```shell
+   $ htpasswd -c /path/to/htpasswd username
+   ```
 
 2. Add this function to your zsh function and call it from sync-os4 function
 ``` shell
 function os4_add_htpasswd_auth() {
-    oc create secret generic htpasswd-secret --from-file=htpasswd=htpasswd-file -n openshift-config
+    oc create secret generic htpasswd-secret --from-file=htpasswd=/path/to/htpasswd -n openshift-config
     oc patch oauth cluster -n openshift-config --type merge --patch "spec:
   identityProviders:
   - htpasswd:
