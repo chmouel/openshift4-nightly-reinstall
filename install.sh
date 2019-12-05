@@ -5,6 +5,7 @@ cd $(readlink -f $(dirname $(readlink -f $0)))
 OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
 
 PROFILE=${1}
+S3_UPLOAD_BUCKET=
 
 declare -A PROFILE_TO_GPG
 WEB=""
@@ -54,9 +55,23 @@ function encrypt() {
 
 	if [[ -n ${gpgemail} ]];then
 		tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
-        gpg --yes --output ${WEB}/tmp/${user}.kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
-		gpg --yes --output ${WEB}/tmp/${user}.webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
-		gpg --yes --output ${WEB}/tmp/${user}.kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+
+		[[ -n ${WEB} ]] && {
+			gpg --yes --output ${WEB}/tmp/${user}.kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+			gpg --yes --output ${WEB}/tmp/${user}.webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+			gpg --yes --output ${WEB}/tmp/${user}.kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+		}
+
+		[[ -n ${S3_UPLOAD_BUCKET} ]] && {
+			mkdir -p ${profile_dir}/auth/gpg/
+			gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+			gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+			gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+			
+			aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
+			
+		}
+
     else
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
 	fi
