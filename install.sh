@@ -20,9 +20,7 @@ source local.sh
     echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
     exit 1
 }
-[[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
-
-[[ -d ${WEB} ]] || mkdir -p ${WEB}
+[[ -n ${WEB} ]] && [[ ! -d ${WEB} ]] && mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
 
