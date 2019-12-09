@@ -15,10 +15,10 @@ def handle_uploaded_file(path, f):
     if not path:
         raise SuspiciousOperation('Invalid upload with no path destination')
 
-    save_path = os.path.join(settings.MEDIA_ROOT, path)
+    save_path = os.path.join(settings.STATIC_ROOT, path)
     # Security breach?
     if not os.path.abspath(save_path).startswith(
-            settings.MEDIA_ROOT) or path.startswith("/") or '..' in path:
+            settings.STATIC_ROOT) or path.startswith("/") or '..' in path:
         raise PermissionDenied("You are not allowed to upload like this")
     if default_storage.exists(save_path):
         default_storage.delete(save_path)

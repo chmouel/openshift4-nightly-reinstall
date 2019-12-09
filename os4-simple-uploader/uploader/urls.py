@@ -23,4 +23,4 @@ urlpatterns = [
     path('', views.index, name='index'),
     url(r'^upload', views.upload, name='upload'),
 ] + static(
-    "/", document_root=settings.MEDIA_ROOT)
+    "/", document_root=settings.STATIC_ROOT)

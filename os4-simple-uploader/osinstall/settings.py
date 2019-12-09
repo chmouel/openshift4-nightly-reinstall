@@ -99,7 +99,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-MEDIA_ROOT = os.environ.get("MEDIA_ROOT", os.path.join(BASE_DIR,
+STATIC_ROOT = os.environ.get("STATIC_ROOT", os.path.join(BASE_DIR,
                                                        "fileuploads"))
-STATIC_ROOT = MEDIA_ROOT
 STATIC_URL = '/'
