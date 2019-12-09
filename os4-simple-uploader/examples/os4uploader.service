@@ -1,0 +1,16 @@
+[Unit]
+Description=uWSGI service unit
+After=syslog.target
+
+[Service]
+PIDFile=/run/%I.pid
+RemainAfterExit=yes
+ExecStart=/usr/bin/uwsgi --ini /etc/uwsgi/os4uploader.ini
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -INT $MAINPID
+Restart=always
+StandardError=syslog
+KillSignal=SIGQUIT
+
+[Install]
+WantedBy=multi-user.target
