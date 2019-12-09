@@ -27,19 +27,19 @@ declare -A PROFILE_TO_GPG=(
 
 ```
 
-There is two different ways to upload the keys, 
+There is different ways to upload the keys,  if you have those settings in your `local.sh` it will use it (you can have multiple of them too) : 
 
 `WEB=/var/www/html/` - copied to a local directory which would be server by a web server 
 
-or/and :
+`WEB_PROTECTED_URL=http://server/upload and WEB_PROTECTED=username:password`: this will upload to the `WEB_PROTECTED_USER` with the username/password of `WEB_PROTECTED` using the form arguments `file` for the uploaded file and `path` for the target path. There is an example of a simple django based uploader in this repo here: [os4-simple-uploader](os4-simple-uploader/). If you setup this, **make sure you password/ip protect the /upload url endpoint** with the front webserver or you will end up with a bunch of warez and other weird files from the internet.
 
 `S3_UPLOAD_BUCKET="teambucket"` - Uploaded to this S3 bucket, you need to make sure the aws cli is installed and configured properly. The buckets would be accessible as : 
 
-`https://${S3_UPLOAD_BUCKET}.s3.$S3_REGION_GET_IT_FROM_CONSOLE.amazonaws.com/${USER}/kubeconfig.gpg`
+  `https://${S3_UPLOAD_BUCKET}.s3.$S3_REGION_GET_IT_FROM_CONSOLE.amazonaws.com/${USER}/kubeconfig.gpg`
 
-Those urls would get the public ACL. 
+  Those urls would get the public ACL. 
 
-You will need to adjust the other examples of this doscument with this url structure.
+  You will need to adjust the other examples of this doscument with this url structure.
 
 * Ask the user for her/his GPG key and import it: `gpg --import gpgkey@user.com.pubkey.asc` or `gpg
    --recv-keys gpgkey@user.com` if it's uploaded on the public GPG servers.
