@@ -54,21 +54,29 @@ function encrypt() {
 	if [[ -n ${gpgemail} ]];then
 		tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
 
+
+		mkdir -p ${profile_dir}/auth/gpg/
+		gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+		gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+		gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+
+
 		if [[ -n ${WEB} ]];then
+			rm -rf ${WEB}/osinstall/${user}
 			mkdir -p ${WEB}/osinstall/${user}
-			gpg --yes --output ${WEB}/osinstall/${user}/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
-			gpg --yes --output ${WEB}/osinstall/${user}/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
-			gpg --yes --output ${WEB}/osinstall/${user}/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+			cp -a ${profile_dir}/auth/gpg ${WEB}/osinstall/${user}
+		fi
+
+		if [[ -n ${WEB_PROTECTED_URL} && -n ${WEB_PROTECTED} ]];then
+			for path in ${profile_dir}/auth/gpg/*;do
+				fname=$(basename $path)
+				curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${user}/${fname} -X POST \
+					 -F file=@${path} ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
+			done
 		fi
 
 		if [[ -n ${S3_UPLOAD_BUCKET} ]];then
-			mkdir -p ${profile_dir}/auth/gpg/
-			gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
-			gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
-			gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
-			
 			aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
-			
 		fi
     else
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
