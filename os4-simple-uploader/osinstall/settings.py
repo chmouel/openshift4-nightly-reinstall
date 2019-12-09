@@ -101,4 +101,5 @@ USE_TZ = True
 
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", os.path.join(BASE_DIR,
                                                        "fileuploads"))
+STATIC_ROOT = MEDIA_ROOT
 STATIC_URL = '/static/'
