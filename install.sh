@@ -5,6 +5,7 @@ cd $(readlink -f $(dirname $(readlink -f $0)))
 OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
 
 PROFILE=${1}
+S3_UPLOAD_BUCKET=
 
 declare -A PROFILE_TO_GPG
 WEB=""
@@ -19,20 +20,19 @@ source local.sh
     echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
     exit 1
 }
-[[ -z ${WEB} ]] && { echo "You need the WEB variable setup in your local.sh"; exit 1 ;}
-
-[[ -d ${WEB} ]] || mkdir -p ${WEB}
+[[ -n ${WEB} ]] && [[ ! -d ${WEB} ]] && mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
-IC=$(readlink -f $(dirname $0)/configs/${PROFILE}.yaml )
-[[ -e ${IC} ]] || {
-	echo "${IC} don't exist"
-	exit
-}
 
 function recreate() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
+
+	IC=$(readlink -f $(dirname $0)/configs/${profile}.yaml )
+	[[ -e ${IC} ]] || {
+		echo "${IC} don't exist"
+		exit
+	}
 
 	echo "${profile}: $(date) :: start"
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
@@ -53,9 +53,23 @@ function encrypt() {
 
 	if [[ -n ${gpgemail} ]];then
 		tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
-        gpg --yes --output ${WEB}/tmp/${user}.kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
-		gpg --yes --output ${WEB}/tmp/${user}.webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
-		gpg --yes --output ${WEB}/tmp/${user}.kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+
+		if [[ -n ${WEB} ]];then
+			mkdir -p ${WEB}/osinstall/${user}
+			gpg --yes --output ${WEB}/osinstall/${user}/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+			gpg --yes --output ${WEB}/osinstall/${user}/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+			gpg --yes --output ${WEB}/osinstall/${user}/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+		fi
+
+		if [[ -n ${S3_UPLOAD_BUCKET} ]];then
+			mkdir -p ${profile_dir}/auth/gpg/
+			gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+			gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+			gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+			
+			aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
+			
+		fi
     else
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
 	fi
@@ -66,6 +80,7 @@ if [[ ${PROFILE} == "-a" ]];then
         recreate ${profile}
         encrypt ${profile}
     done
+	exit
 fi
 
 [[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {

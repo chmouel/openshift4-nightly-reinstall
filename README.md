@@ -25,8 +25,21 @@ declare -A PROFILE_TO_GPG=(
     ["user"]="gpgkey@user.com"
 )
 
-WEB=/var/www/html/
 ```
+
+There is two different ways to upload the keys, 
+
+`WEB=/var/www/html/` - copied to a local directory which would be server by a web server 
+
+or/and :
+
+`S3_UPLOAD_BUCKET="teambucket"` - Uploaded to this S3 bucket, you need to make sure the aws cli is installed and configured properly. The buckets would be accessible as : 
+
+`https://${S3_UPLOAD_BUCKET}.s3.$S3_REGION_GET_IT_FROM_CONSOLE.amazonaws.com/${USER}/kubeconfig.gpg`
+
+Those urls would get the public ACL. 
+
+You will need to adjust the other examples of this doscument with this url structure.
 
 * Ask the user for her/his GPG key and import it: `gpg --import gpgkey@user.com.pubkey.asc` or `gpg
    --recv-keys gpgkey@user.com` if it's uploaded on the public GPG servers.
@@ -59,7 +72,7 @@ $ curl -s yourwebserver.com/${profile}.kubeadmin.password.gpg |gpg --decrypt
 With the full url to access :
 
 ```shell
-curl -s yourwebserver.comf/tmp/${profile}.webaccess.gpg |gpg --decrypt
+curl -s yourwebserver.comf/${profile}.webaccess.gpg |gpg --decrypt
 ```
 
 ## User creation automations
@@ -73,7 +86,7 @@ You can automatically add new users to your clusters, so you don't have to have 
    $ htpasswd -c /path/to/htpasswd username
    ```
 
-2. Add this function to your zsh function and call it from sync-os4 function
+2. Add this function to your zshrc and call it from sync-os4 function
 ``` shell
 function os4_add_htpasswd_auth() {
     oc create secret generic htpasswd-secret --from-file=htpasswd=/path/to/htpasswd -n openshift-config
