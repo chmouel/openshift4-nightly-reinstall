@@ -26,8 +26,20 @@ def handle_uploaded_file(path, f):
     return
 
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
 @csrf_exempt
 def upload(request):
+    if os.environ.get("RESTRICT_IP") and get_client_ip(
+            request) != os.environ.get("RESTRICT_IP"):
+        raise PermissionDenied("You are not allowed to come here")
     if request.method == 'POST':
         handle_uploaded_file(request.POST['path'], request.FILES)
     return HttpResponse("OK")
