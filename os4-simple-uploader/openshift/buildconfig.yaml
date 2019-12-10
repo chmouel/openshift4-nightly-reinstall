@@ -1,0 +1,29 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    app: openshift4-nightly-reinstall
+  name: openshift4-nightly-reinstall
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: openshift4-nightly-reinstall:latest
+  source:
+    contextDir: os4-simple-uploader
+    git:
+      uri: https://github.com/chmouel/openshift4-nightly-reinstall
+    type: Git
+  strategy:
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: python:3.6
+        namespace: openshift
+    type: Source
+  triggers:
+  - type: ConfigChange
+  - imageChange: {}
+    type: ImageChange
+status:
+  lastVersion: 0

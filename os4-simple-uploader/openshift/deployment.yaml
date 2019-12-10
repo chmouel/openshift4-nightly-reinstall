@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: openshift4-nightly-reinstall
+  name: openshift4-nightly-reinstall
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openshift4-nightly-reinstall
+      deploymentconfig: openshift4-nightly-reinstall
+  template:
+    metadata:
+      labels:
+        app: openshift4-nightly-reinstall
+        deploymentconfig: openshift4-nightly-reinstall
+    spec:
+      containers:
+      - image: docker.io/bitnami/nginx
+        name: nginx
+        volumeMounts:
+        - mountPath: /opt/bitnami/nginx/conf/server_blocks/
+          name: my-nginx-conf
+        - mountPath: /fileuploads
+          name: staticfiles
+      - env:
+        - name: APP_MODULE
+          value: osinstall.wsgi
+        - name: DISABLE_MIGRATE
+          value: "true"
+        - name: SECRET_KEY
+          value: %SECRET_KEY%
+        command: ["gunicorn", "osinstall.wsgi", "--bind=0.0.0.0:9000", "--access-logfile=-", "--reload"]
+        image: %IMAGE%
+        name: openshift4-nightly-reinstall
+        volumeMounts:
+        - mountPath: /opt/app-root/src/fileuploads
+          name: staticfiles
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: my-nginx-conf
+        name: my-nginx-conf
+      - emptyDir: {}
+        name: staticfiles

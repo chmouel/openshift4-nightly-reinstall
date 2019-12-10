@@ -1,0 +1,9 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app: openshift4-nightly-reinstall
+  name: openshift4-nightly-reinstall
+spec:
+  lookupPolicy:
+    local: false
