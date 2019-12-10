@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Chmouel Boudjnah <chmouel@redhat.com>
-URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest
+version=latest
+[[ -n ${1} ]] && version=${1}
+URL=https://mirror.openshift.com/pub/openshift-v4/clients/ocp/${version}
 set -e
 
 version=$(curl -s ${URL}/release.txt |sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
