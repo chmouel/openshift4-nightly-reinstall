@@ -1,9 +1,13 @@
 SECRET_KEY := $(shell openssl rand -base64 20)
+HTPASSWD_FILE := osinstall.htpasswd
+
+ifeq ("$(wildcard $(HTPASSWD_FILE))","")
+    $(error $(HTPASSWD_FILE) does not exist, create one with `htpasswd`)
+endif
 
 config:
-	test -f osinstall.htpasswd || { echo "You need to create osinstall.htpasswd file"; exit 1 ;}
 	oc delete configmap my-nginx-conf 2>/dev/null || true
-	oc create configmap --save-config my-nginx-conf --from-file osinstall.htpasswd \
+	oc create configmap --save-config my-nginx-conf --from-file $(HTPASSWD_FILE) \
 		--from-file nginx.conf
 
 reconfig: config
