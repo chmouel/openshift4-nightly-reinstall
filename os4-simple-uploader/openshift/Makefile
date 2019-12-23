@@ -1,5 +1,6 @@
 SECRET_KEY := $(shell openssl rand -base64 20)
 HTPASSWD_FILE := configs/osinstall.htpasswd
+APP_NAME := openshift4-nightly-reinstall
 
 ifeq ("$(wildcard $(HTPASSWD_FILE))","")
     $(error $(HTPASSWD_FILE) does not exist, create one with `htpasswd`)
@@ -11,21 +12,24 @@ config:
 		--from-file configs/nginx.conf
 
 reconfig: config
-	@oc delete pod `oc get pod -o name -l app=openshift4-nightly-reinstall|sed 's,pod/,,'` || true
+	@oc delete pod `oc get pod -o name -l app=$(APP_NAME)|sed 's,pod/,,'` || true
 
 deploy: reconfig
 	oc delete -f yamls/service.yaml 2>/dev/null || true
 	oc create -f yamls/service.yaml
-	oc delete deployment/openshift4-nightly-reinstall 2>/dev/null || true
-	@IMAGE=`oc get is openshift4-nightly-reinstall -o json | \
+	oc delete deployment/$(APP_NAME) 2>/dev/null || true
+	@IMAGE=`oc get is $(APP_NAME) -o json | \
 			python -c "import sys, json;x=json.load(sys.stdin);print(x['status']['dockerImageRepository'])"` ; \
     sed -e "s,%SECRET_KEY%,$(SECRET_KEY)," \
         -e "s,%IMAGE%,$${IMAGE}," yamls/deployment.yaml | \
 	oc create -f -
+	oc expose service/$(APP_NAME) 2>/dev/null || true
 
 build:
 	@oc delete -f yamls/imagestream.yaml 2>/dev/null || true
 	@oc create -f yamls/imagestream.yaml 2>/dev/null || true
 	@oc delete -f yamls/buildconfig.yaml 2>/dev/null || true
 	@oc create -f yamls/buildconfig.yaml 2>/dev/null || true
-	oc start-build openshift4-nightly-reinstall -F
+	oc start-build $(APP_NAME) -F -w
+
+.PHONY: build deploy reconfig config

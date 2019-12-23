@@ -17,7 +17,7 @@ case $(uname -o) in
         platform=linux
         ;;
     Darwin)
-        platform=osx
+        platform=mac
         ;;
     *)
         echo "Could not detect platform: $(uname -o)"
