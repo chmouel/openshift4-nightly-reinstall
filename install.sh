@@ -10,6 +10,11 @@ S3_UPLOAD_BUCKET=
 declare -A PROFILE_TO_GPG
 WEB=""
 
+function_exists() {
+    declare -f -F $1 > /dev/null
+    return $?
+}
+
 [[ -e local.sh ]]  || { echo "Could not find your local.sh which you need to setup"; exit 1 ;}
 
 source local.sh
@@ -24,6 +29,17 @@ source local.sh
 
 SD=$(readlink -f $(dirname $0))
 
+function delete() {
+    local profile=$1
+    local profile_dir=${SD}/profiles/${profile}
+	[[ -e ${profile_dir}/terraform.tfstate ]] && {
+        function_exists pre_delete_${profile} && pre_delete_${profile}
+		${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error
+        function_exists post_delete_${profile} && post_delete_${profile}
+		rm -rf ${profile_dir}
+	}
+}
+
 function recreate() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
@@ -35,14 +51,17 @@ function recreate() {
 	}
 
 	echo "${profile}: $(date) :: start"
-	[[ -e ${profile_dir}/terraform.tfstate ]] && {
-		${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error
-		rm -rf ${profile_dir}
-	}
+
+	delete ${profile}
+
 	mkdir -p ${profile_dir}
 
 	cp ${IC} ${profile_dir}/install-config.yaml
+    function_exists pre_create_${profile} && pre_create_${profile}
+
 	${OS4_BINARY} create cluster --dir ${profile_dir} --log-level=error
+
+    function_exists post_create_${profile} && post_create_${profile}
 	echo "${profile}: $(date) :: stop"
 }
 
@@ -50,6 +69,8 @@ function encrypt() {
 	local user=$1
 	local profile_dir=${SD}/profiles/${user}
 	local gpgemail=${PROFILE_TO_GPG[$user]}
+
+    function_exists pre_encrypt_${profile} && pre_encrypt_${profile}
 
 	if [[ -z ${gpgemail} ]];then
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
@@ -80,6 +101,8 @@ function encrypt() {
 	if [[ -n ${S3_UPLOAD_BUCKET} ]];then
 		aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
 	fi
+
+    function_exists post_encrypt_${profile} && post_encrypt_${profile}
 }
 
 if [[ ${PROFILE} == "-a" ]];then
