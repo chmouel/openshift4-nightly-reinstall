@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Chmouel Boudjnah <chmouel@redhat.com>
+set -e
 version=latest
 base="ocp"
 [[ $1 == "-d" ]] && { base="ocp-dev-preview"  ; shift ;}
 [[ -n ${1} ]] && version=${1}
 URL=https://mirror.openshift.com/pub/openshift-v4/clients/${base}/${version}
-set -e
 DEST=${DEST:-.}
-set -x
 version=$(curl -s ${URL}/release.txt |sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
 
 [[ -z ${version} ]] && {
