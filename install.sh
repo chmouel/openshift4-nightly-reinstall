@@ -105,17 +105,24 @@ function encrypt() {
     function_exists post_encrypt_${profile} && post_encrypt_${profile}
 }
 
+function clean() {
+	local domain
+	domain=$(python3 -c 'import sys,yaml;sys;x = yaml.load(sys.stdin.read(), Loader=yaml.SafeLoader);print(x["metadata"]["name"])' < configs/${1}.yaml)
+	python3 scripts/openshift-install-cleanup-route53.records.py -s -f ${domain}
+}
+
 if [[ ${PROFILE} == "-a" ]];then
     for profile in ${!PROFILE_TO_GPG[@]};do
+		clean ${profile}
         recreate ${profile}
         encrypt ${profile}
     done
-	exit
 fi
 
 [[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
 }
 
+clean ${PROFILE}
 recreate ${PROFILE}
 encrypt ${PROFILE}
