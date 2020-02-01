@@ -27,7 +27,7 @@ case $(uname -o) in
 esac
 
 echo -n "Downloading openshift-clients-${version}: "
-curl -sL ${URL}/openshift-client-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- oc kubectl
+curl -sL ${URL}/openshift-client-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- oc  && ln -sf oc kubectl
 echo "Done."
 echo -n "Downloading openshift-installer-${version}: "
 curl -sL ${URL}/openshift-install-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- openshift-install
