@@ -105,7 +105,7 @@ if __name__ == '__main__':
     zonename = args.clustername + '.' + DEVCLUSTER_DNS_ZONE
 
     if not args.force:
-        if not arg.silent:
+        if not args.silent:
             print("I am about to delete the zone: " + zonename)
         reply = input(
             "Just out of sanity check, can you please confirm that's what you want [Ny]: "

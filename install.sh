@@ -37,7 +37,7 @@ function delete() {
 		${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error
         function_exists post_delete_${profile} && post_delete_${profile}
 		rm -rf ${profile_dir}
-	}
+	} || true
 }
 
 function recreate() {
@@ -94,7 +94,7 @@ function encrypt() {
 		for path in ${profile_dir}/auth/gpg/*;do
 			fname=$(basename $path)
 			curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${user}/${fname} -X POST \
-				 -F file=@${path} ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
+				 -F file="devreinstall/@${path}" ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
 		done
 	fi
 
@@ -105,7 +105,7 @@ function encrypt() {
     function_exists post_encrypt_${profile} && post_encrypt_${profile}
 }
 
-function clean() {
+function cleandns() {
 	local domain
 	domain=$(python3 -c 'import sys,yaml;sys;x = yaml.load(sys.stdin.read(), Loader=yaml.SafeLoader);print(x["metadata"]["name"])' < configs/${1}.yaml)
 	python3 scripts/openshift-install-cleanup-route53.records.py -s -f ${domain}
@@ -123,6 +123,6 @@ fi
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
 }
 
-clean ${PROFILE}
+cleandns ${PROFILE}
 recreate ${PROFILE}
 encrypt ${PROFILE}
