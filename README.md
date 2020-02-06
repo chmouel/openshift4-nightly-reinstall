@@ -31,7 +31,7 @@ There is different ways to upload the keys,  if you have those settings in your 
 
 `WEB=/var/www/html/` - copied to a local directory which would be server by a web server
 
-`WEB_PROTECTED_URL=http://server/upload and WEB_PROTECTED=username:password`: this will upload to the `WEB_PROTECTED_USER` with the username/password of `WEB_PROTECTED` using the form arguments `file` for the uploaded file and `path` for the target path. There is an example of a simple django based uploader in this repo here: [os4-simple-uploader](os4-simple-uploader/). If you setup this, **make sure you password/ip protect the /upload url endpoint** with the front webserver or you will end up with a bunch of warez and other weird files from the internet.
+`WEB_PROTECTED_URL=http://server/upload and WEB_PROTECTED=username:password`: this will upload to the `WEB_PROTECTED_USER` with the username/password of `WEB_PROTECTED` using the form arguments `file` for the uploaded file and `path` for the target path. We usually use this combined with this project : [go-simple-uploader](https://github.com/chmouel/go-simple-uploader). If you setup this, **make sure you password/ip protect the /upload url endpoint** with the front webserver or you will end up with a bunch of warez and other weird files from the internet.
 
 `S3_UPLOAD_BUCKET="teambucket"` - Uploaded to this S3 bucket, you need to make sure the aws cli is installed and configured properly. The buckets would be accessible as :
 
