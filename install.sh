@@ -77,6 +77,7 @@ function encrypt() {
         return
     fi
 
+	[[ -e ${profile_dir}/.openshift_install.log ]] || return
 	tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
 
 	mkdir -p ${profile_dir}/auth/gpg/
@@ -93,8 +94,8 @@ function encrypt() {
 	if [[ -n ${WEB_PROTECTED_URL} && -n ${WEB_PROTECTED} ]];then
 		for path in ${profile_dir}/auth/gpg/*;do
 			fname=$(basename $path)
-			curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${user}/${fname} -X POST \
-				 -F file="devreinstall/@${path}" ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
+			curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${WEB_PROTECTED_PREFIX}${user}/${fname} -X POST \
+				 -F file="@${path}" ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
 		done
 	fi
 
@@ -102,7 +103,7 @@ function encrypt() {
 		aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
 	fi
 
-    function_exists post_encrypt_${profile} && post_encrypt_${profile}
+    function_exists post_encrypt_${profile} && post_encrypt_${profile} || true
 }
 
 function cleandns() {
@@ -117,6 +118,7 @@ if [[ ${PROFILE} == "-a" ]];then
         recreate ${profile}
         encrypt ${profile}
     done
+	exit 0
 fi
 
 [[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
