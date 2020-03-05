@@ -29,6 +29,16 @@ source local.sh
 
 SD=$(readlink -f $(dirname $0))
 
+function setcreds() {
+    local profile=$1
+    [[ -n ${AWS_SHARED_CREDENTIALS_FILE} ]] && return
+    if [[ -e $(dirname $0)/configs/${profile}.credentials ]];then
+        export AWS_SHARED_CREDENTIALS_FILE=$(dirname $0)/configs/${profile}.credentials
+    else
+        export AWS_SHARED_CREDENTIALS_FILE=
+    fi
+}
+
 function delete() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
@@ -49,7 +59,6 @@ function recreate() {
 		echo "${IC} don't exist"
 		exit
 	}
-
 	echo "${profile}: $(date) :: start"
 
 	delete ${profile}
@@ -112,11 +121,17 @@ function cleandns() {
 	python3 scripts/openshift-install-cleanup-route53.records.py -s -f ${domain}
 }
 
+function main() {
+    local profile=$1
+    setcreds ${profile}
+    cleandns ${profile}
+    recreate ${profile}
+    encrypt ${profile}
+}
+
 if [[ ${PROFILE} == "-a" ]];then
     for profile in ${!PROFILE_TO_GPG[@]};do
-		clean ${profile}
-        recreate ${profile}
-        encrypt ${profile}
+		main ${profile}
     done
 	exit 0
 fi
@@ -125,6 +140,4 @@ fi
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
 }
 
-cleandns ${PROFILE}
-recreate ${PROFILE}
-encrypt ${PROFILE}
+main ${PROFILE}

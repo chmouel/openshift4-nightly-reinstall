@@ -28,6 +28,7 @@
 
 import argparse
 import sys
+import os
 
 import boto
 
@@ -82,25 +83,49 @@ def delete_record(zonename, recordname, silent):
     zone.delete_a(record.name)
 
 
+def check_for_credential_file():
+    if 'AWS_SHARED_CREDENTIALS_FILE' not in os.environ:
+        return (None, None)
+    path = os.environ['AWS_SHARED_CREDENTIALS_FILE']
+    path = os.path.expanduser(path)
+    path = os.path.expandvars(path)
+    aws_access_key_id = None
+    aws_secret_access_key = None
+
+    if os.path.isfile(path):
+        fp = open(path)
+        lines = fp.readlines()
+        fp.close()
+        for line in lines:
+            if line[0] != '#':
+                if '=' in line:
+                    name, value = line.split('=', 1)
+                    if name.strip() == 'aws_access_key_id':
+                        value = value.strip()
+                        aws_access_key_id = value
+                    elif name.strip() == 'aws_secret_access_key':
+                        value = value.strip()
+                        aws_secret_access_key = value
+    return (aws_access_key_id, aws_secret_access_key)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-f',
-        action='store_true',
-        default=False,
-        dest='force',
-        help='Force install')
-    parser.add_argument(
-        '-s',
-        action='store_true',
-        default=False,
-        dest='silent',
-        help='Quiet')
-
+    parser.add_argument('-f',
+                        action='store_true',
+                        default=False,
+                        dest='force',
+                        help='Force install')
+    parser.add_argument('-s',
+                        action='store_true',
+                        default=False,
+                        dest='silent',
+                        help='Quiet')
 
     parser.add_argument('clustername')
     args = parser.parse_args()
-    route53 = boto.connect_route53()
+    aws_access_key_id, aws_secret_access_key = check_for_credential_file()
+    route53 = boto.connect_route53(aws_access_key_id, aws_secret_access_key)
 
     zonename = args.clustername + '.' + DEVCLUSTER_DNS_ZONE
 
