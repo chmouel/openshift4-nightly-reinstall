@@ -87,7 +87,7 @@ function encrypt() {
     fi
 
 	[[ -e ${profile_dir}/.openshift_install.log ]] || return
-	tail -2 ${profile_dir}/.openshift_install.log > ${profile_dir}/auth/webaccess
+	tail -10 ${profile_dir}/.openshift_install.log|grep "Access the OpenShift" > ${profile_dir}/auth/webaccess
 
 	mkdir -p ${profile_dir}/auth/gpg/
 	gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
