@@ -9,9 +9,8 @@
 # set max shift to 0, so that when a version is explicitly specified that version is fetched
 # modify this in future if a workflow based on latest version and recent (shifted) versions is needed
 set -eu
-set -x
 
-CURL_OPTIONS="-v" # -s for quiet, -v if you want debug
+CURL_OPTIONS="-s" # -s for quiet, -v if you want debug
 
 MAX_SHIFT=1
 NIGHTLY_RELEASE="https://raw.githubusercontent.com/openshift/tektoncd-pipeline/release-next/openshift/release/tektoncd-pipeline-nightly.yaml"
