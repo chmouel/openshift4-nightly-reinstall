@@ -13,9 +13,12 @@ set -eu
 CURL_OPTIONS="-s" # -s for quiet, -v if you want debug
 
 MAX_SHIFT=1
-NIGHTLY_RELEASE="https://raw.githubusercontent.com/openshift/tektoncd-pipeline/release-next/openshift/release/tektoncd-pipeline-nightly.yaml"
-STABLE_RELEASE_URL='https://raw.githubusercontent.com/openshift/tektoncd-pipeline/${version}/openshift/release/tektoncd-pipeline-${version}.yaml'
-PAYLOAD_PIPELINE_VERSION="release-next"
+
+
+TARGET=${1}
+UPSTREAM_REPO=${2}
+NIGHTLY_RELEASE=${3}
+STABLE_RELEASE_URL=${4}
 
 TMPFILE=$(mktemp /tmp/.mm.XXXXXX)
 clean() { rm -f ${TMPFILE}; }
@@ -23,8 +26,7 @@ trap clean EXIT
 
 function get_version {
     local shift=${1} # 0 is latest, increase is the version before etc...
-    curl -f ${CURL_OPTIONS} -o ${TMPFILE} https://api.github.com/repos/tektoncd/pipeline/releases
-    cat >&2 ${TMPFILE}
+    curl -f ${CURL_OPTIONS} -o ${TMPFILE} https://api.github.com/repos/${UPSTREAM_REPO}/releases
     local version=$(python -c "from pkg_resources import parse_version;import json;jeez=json.load(open('${TMPFILE}'));print(sorted([x['tag_name'] for x in jeez], key=parse_version, reverse=True)[${shift}])")
     PAYLOAD_PIPELINE_VERSION=${version}
     echo $(eval echo ${STABLE_RELEASE_URL})
@@ -48,15 +50,13 @@ function geturl() {
             return 0
         fi
     done
-    echo \n"No working Pipeline payload url found"\n
+    echo \n"No working ${TARGET} payload url found"\n
     exit 1
 }
 
 URL=$(geturl)
-echo Pipeline Payload URL: ${URL}
+echo ${TARGET} template: ${URL}
 
 # setting this a default so set -u is not failing
-arg=${1:-"/tmp"}
-
-[[ -d ${arg}/pipelines ]] || mkdir -p ${arg}/pipelines
-curl -Ls ${URL} -o ${arg}/pipelines/release.yaml
+[[ -d /tmp/${TARGET,,} ]] || mkdir -p /tmp/${TARGET,,}
+curl -Ls ${URL} -o /tmp/${TARGET,,}/release.yaml
