@@ -12,7 +12,7 @@ set -eu
 
 CURL_OPTIONS="-s" # -s for quiet, -v if you want debug
 
-MAX_SHIFT=1
+MAX_SHIFT=3
 
 
 TARGET=${1}
