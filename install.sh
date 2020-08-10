@@ -59,9 +59,9 @@ function delete() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
-        function_exists pre_delete_${profile} && pre_delete_${profile}
+        function_exists pre_delete_${profile} && pre_delete_${profile} || true
 #		timeout 30m ${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error || true
-        function_exists post_delete_${profile} && post_delete_${profile}
+        function_exists post_delete_${profile} && post_delete_${profile}  || true
 		rm -rf ${profile_dir}
 	} || true
 }
@@ -82,11 +82,11 @@ function recreate() {
 	mkdir -p ${profile_dir}
 
 	cp ${IC} ${profile_dir}/install-config.yaml
-    function_exists pre_create_${profile} && pre_create_${profile}
+    function_exists pre_create_${profile} && pre_create_${profile}  || true
 
 	${OS4_BINARY} create cluster --dir ${profile_dir} --log-level=error
 
-    function_exists post_create_${profile} && post_create_${profile}
+    function_exists post_create_${profile} && post_create_${profile}  || true
 	echo "${profile}: $(date) :: stop"
 }
 
@@ -95,7 +95,7 @@ function encrypt() {
 	local profile_dir=${SD}/profiles/${user}
 	local gpgemail=${PROFILE_TO_GPG[$user]}
 
-    function_exists pre_encrypt_${profile} && pre_encrypt_${profile}
+    function_exists pre_encrypt_${profile} && pre_encrypt_${profile}  || true
 
 	if [[ -z ${gpgemail} ]];then
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
