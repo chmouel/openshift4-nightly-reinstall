@@ -3,6 +3,22 @@
 set -e
 cd $(readlink -f $(dirname $(readlink -f $0)))
 OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
+SYNCONLY=
+EVERYONE=
+
+while getopts "sa" o; do
+    case "${o}" in
+        a)
+            EVERYONE=yes;;
+        s)
+            SYNCONLY=yes;;
+        *)
+            echo "Invalid option";
+            exit 1;
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 PROFILE=${1}
 S3_UPLOAD_BUCKET=
@@ -123,13 +139,15 @@ function cleandns() {
 
 function main() {
     local profile=$1
-    setcreds ${profile}
-    cleandns ${profile}
-    recreate ${profile}
+    if [[ -z ${SYNCONLY} ]];then
+        setcreds ${profile}
+        cleandns ${profile}
+        recreate ${profile}
+    fi
     encrypt ${profile}
 }
 
-if [[ ${PROFILE} == "-a" ]];then
+if [[ -n ${EVERYONE} ]];then
     for profile in ${!PROFILE_TO_GPG[@]};do
 		main ${profile}
     done
