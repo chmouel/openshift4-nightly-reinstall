@@ -36,11 +36,6 @@ function_exists() {
 source local.sh
 
 [[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
-[[ -z ${PROFILE} ]] && {
-    echo "I need a profile as argument or -a for everything";
-    echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
-    exit 1
-}
 [[ -n ${WEB} ]] && [[ ! -d ${WEB} ]] && mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
@@ -153,6 +148,12 @@ if [[ -n ${EVERYONE} ]];then
     done
 	exit 0
 fi
+
+[[ -z ${PROFILE} ]] && {
+    echo "I need a profile as argument or -a for everything";
+    echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
+    exit 1
+}
 
 [[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
