@@ -94,16 +94,20 @@ function encrypt() {
 
 	if [[ -z ${gpgemail} ]];then
         echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
-        return
     fi
 
 	[[ -e ${profile_dir}/.openshift_install.log ]] || return
 	tail -10 ${profile_dir}/.openshift_install.log|grep "Access the OpenShift" > ${profile_dir}/auth/webaccess
 
 	mkdir -p ${profile_dir}/auth/gpg/
-	gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
-	gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
-	gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+	if [[ -n ${gpgemail} ]];then
+		gpg --yes --output ${profile_dir}/auth/gpg/kubeconfig.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeconfig
+		gpg --yes --output ${profile_dir}/auth/gpg/webaccess.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/webaccess
+		gpg --yes --output ${profile_dir}/auth/gpg/kubeadmin.password.gpg -r ${gpgemail} --encrypt ${profile_dir}/auth/kubeadmin-password
+	else
+		cp -v ${profile_dir}/auth/{kubeconfig,webaccess,kubeadmin-password} ${profile_dir}/auth/gpg/
+	fi
+
 
 	if [[ -n ${WEB} ]];then
 		rm -rf ${WEB}/osinstall/${user}
