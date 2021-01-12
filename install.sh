@@ -55,7 +55,7 @@ function delete() {
     local profile_dir=${SD}/profiles/${profile}
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
         function_exists pre_delete_${profile} && pre_delete_${profile} || true
-#		timeout 30m ${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error || true
+		timeout 30m ${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error || true
         function_exists post_delete_${profile} && post_delete_${profile}  || true
 		rm -rf ${profile_dir}
 	} || true
