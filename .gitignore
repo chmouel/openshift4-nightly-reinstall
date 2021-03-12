@@ -3,6 +3,7 @@ binaries/kubectl
 binaries/olddownload.sh
 binaries/openshift-install*
 binaries/oc*
+binaries/*/
 .openshift_install.log
 .openshift_install_state.json
 local.sh
