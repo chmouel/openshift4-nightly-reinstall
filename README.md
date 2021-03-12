@@ -131,3 +131,8 @@ function os4_add_htpasswd_auth() {
     # oc adm policy add-cluster-role-to-user cluster-admin ${your_username_used_to_login}
 }
 ```
+
+## Extra configs
+
+* You can have a file in config/${PROFILE}.credentials to use a different set of AWS credentials for that profile
+* You can have a file in config/${PROFILE}.openshift-install to use a different openshift installer binary  for that profile

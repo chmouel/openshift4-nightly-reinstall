@@ -6,10 +6,12 @@ OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
 SYNCONLY=
 EVERYONE=
 
-while getopts "sa" o; do
+while getopts "ska" o; do
     case "${o}" in
         a)
             EVERYONE=yes;;
+		k)
+			DELETEONLY=yes;;
         s)
             SYNCONLY=yes;;
         *)
@@ -50,12 +52,22 @@ function setcreds() {
     fi
 }
 
+#TODO: downloader
+function os4_binary() {
+	local profile=$1
+	[[ -e ${SD}/config/${profile}.openshift-install ]] && {
+		echo ${SD}/config/${profile}.openshift-install
+		return
+	}
+	echo ${OS4_BINARY}
+}
+
 function delete() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
         function_exists pre_delete_${profile} && pre_delete_${profile} || true
-		timeout 30m ${OS4_BINARY} destroy cluster --dir ${profile_dir} --log-level=error || true
+		timeout 30m $(os4_binary) destroy cluster --dir ${profile_dir} --log-level=error || true
         function_exists post_delete_${profile} && post_delete_${profile}  || true
 		rm -rf ${profile_dir}
 	} || true
@@ -74,12 +86,13 @@ function recreate() {
 
 	delete ${profile}
 
+	[[ -n ${DELETEONLY} ]] && exit 0
 	mkdir -p ${profile_dir}
 
 	cp ${IC} ${profile_dir}/install-config.yaml
     function_exists pre_create_${profile} && pre_create_${profile}  || true
 
-	${OS4_BINARY} create cluster --dir ${profile_dir} --log-level=error
+	$(os4_binary) create cluster --dir ${profile_dir} --log-level=error
 
     function_exists post_create_${profile} && post_create_${profile}  || true
 	echo "${profile}: $(date) :: stop"
@@ -158,6 +171,7 @@ fi
     echo "Profiles available are: ${!PROFILE_TO_GPG[@]}"
     exit 1
 }
+
 
 [[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
     echo "WARNING: No GPG key association has been setup for ${PROFILE}"
