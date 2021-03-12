@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Chmouel Boudjnah <chmouel@redhat.com>
 set -e
+[[ -z ${1} ]] && cd $(readlink -f $(dirname $(readlink -f $0)))
 version=latest
 base="ocp"
 [[ $1 == "-d" ]] && { base="ocp-dev-preview"  ; shift ;}
@@ -26,9 +27,15 @@ case $(uname -o) in
         exit 1
 esac
 
+[[ -x ./oc ]] && ./oc version || true
+[[ -x ./openshift-install ]] && ./openshift-install version || true
+
 echo -n "Downloading openshift-clients-${version}: "
 curl -sL ${URL}/openshift-client-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- oc  && ln -sf oc kubectl
 echo "Done."
 echo -n "Downloading openshift-installer-${version}: "
 curl -sL ${URL}/openshift-install-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- openshift-install
 echo "Done."
+
+[[ -x ./oc ]] && ./oc version || true
+[[ -x ./openshift-install ]] && ./openshift-install version || true
