@@ -55,8 +55,8 @@ function setcreds() {
 #TODO: downloader
 function os4_binary() {
 	local profile=$1
-	[[ -e ${SD}/config/${profile}.openshift-install ]] && {
-		echo ${SD}/config/${profile}.openshift-install
+	[[ -x ${SD}/configs/${profile}.openshift-install ]] && {
+		echo ${SD}/configs/${profile}.openshift-install
 		return
 	}
 	echo ${OS4_BINARY}
@@ -67,7 +67,7 @@ function delete() {
     local profile_dir=${SD}/profiles/${profile}
 	[[ -e ${profile_dir}/terraform.tfstate ]] && {
         function_exists pre_delete_${profile} && pre_delete_${profile} || true
-		timeout 30m $(os4_binary) destroy cluster --dir ${profile_dir} --log-level=error || true
+		timeout 30m $(os4_binary ${profile}) destroy cluster --dir ${profile_dir} --log-level=error || true
         function_exists post_delete_${profile} && post_delete_${profile}  || true
 		rm -rf ${profile_dir}
 	} || true
@@ -92,7 +92,7 @@ function recreate() {
 	cp ${IC} ${profile_dir}/install-config.yaml
     function_exists pre_create_${profile} && pre_create_${profile}  || true
 
-	$(os4_binary) create cluster --dir ${profile_dir} --log-level=error
+	$(os4_binary ${profile}) create cluster --dir ${profile_dir} --log-level=error
 
     function_exists post_create_${profile} && post_create_${profile}  || true
 	echo "${profile}: $(date) :: stop"
