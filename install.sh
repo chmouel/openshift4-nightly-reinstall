@@ -65,11 +65,10 @@ function os4_binary() {
 function delete() {
     local profile=$1
     local profile_dir=${SD}/profiles/${profile}
-	[[ -e ${profile_dir}/terraform.tfstate ]] && {
+	[[ -e ${profile_dir}/terraform.tfstate || -e ${profile_dir}/terraform.tfvars.json ]] && {
         function_exists pre_delete_${profile} && pre_delete_${profile} || true
 		timeout 30m $(os4_binary ${profile}) destroy cluster --dir ${profile_dir} --log-level=error || true
         function_exists post_delete_${profile} && post_delete_${profile}  || true
-		rm -rf ${profile_dir}
 	} || true
 }
 
@@ -172,9 +171,5 @@ fi
     exit 1
 }
 
-
-[[ -z ${PROFILE_TO_GPG[$PROFILE]} ]] && {
-    echo "WARNING: No GPG key association has been setup for ${PROFILE}"
-}
 
 main ${PROFILE}
