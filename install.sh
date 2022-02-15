@@ -37,7 +37,7 @@ function_exists() {
 
 source local.sh
 
-[[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
+#[[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
 [[ -n ${WEB} ]] && [[ ! -d ${WEB} ]] && mkdir -p ${WEB}
 
 SD=$(readlink -f $(dirname $0))
@@ -155,7 +155,6 @@ function main() {
         cleandns ${profile}
         recreate ${profile}
     fi
-    encrypt ${profile}
 }
 
 if [[ -n ${EVERYONE} ]];then
