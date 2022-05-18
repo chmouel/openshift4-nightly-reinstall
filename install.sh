@@ -105,11 +105,11 @@ function encrypt() {
     function_exists pre_encrypt_${profile} && pre_encrypt_${profile}  || true
 
 	if [[ -z ${gpgemail} ]];then
-        echo "${user}:: Could not find a GPG key to encrypt: ${profile_dir}/auth/kubeconfig"
+        return 0
     fi
 
 	[[ -e ${profile_dir}/.openshift_install.log ]] || return
-	tail -10 ${profile_dir}/.openshift_install.log|grep "Access the OpenShift" > ${profile_dir}/auth/webaccess
+	tail -10 ${profile_dir}/.openshift_install.log|grep "Login to the console" > ${profile_dir}/auth/webaccess
 
 	mkdir -p ${profile_dir}/auth/gpg/
 	if [[ -n ${gpgemail} ]];then
@@ -119,27 +119,31 @@ function encrypt() {
 	else
 		cp -v ${profile_dir}/auth/{kubeconfig,webaccess,kubeadmin-password} ${profile_dir}/auth/gpg/
 	fi
-
-
-	if [[ -n ${WEB} ]];then
-		rm -rf ${WEB}/osinstall/${user}
-		mkdir -p ${WEB}/osinstall/${user}
-		cp -a ${profile_dir}/auth/gpg ${WEB}/osinstall/${user}
-	fi
-
-	if [[ -n ${WEB_PROTECTED_URL} && -n ${WEB_PROTECTED} ]];then
-		for path in ${profile_dir}/auth/gpg/*;do
-			fname=$(basename $path)
-			curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${WEB_PROTECTED_PREFIX}${user}/${fname} -X POST \
-				 -F file="@${path}" ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
-		done
-	fi
-
-	if [[ -n ${S3_UPLOAD_BUCKET} ]];then
-		aws s3 cp --quiet --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read-write
-	fi
-
     function_exists post_encrypt_${profile} && post_encrypt_${profile} || true
+}
+
+function syncit() {
+	local user=$1
+	local profile_dir=${SD}/profiles/${user}
+
+    if [[ -n ${WEB} ]];then
+        rm -rf ${WEB}/osinstall/${user}
+        mkdir -p ${WEB}/osinstall/${user}
+        cp -a ${profile_dir}/auth/gpg ${WEB}/osinstall/${user}
+    fi
+
+    if [[ -n ${WEB_PROTECTED_URL} && -n ${WEB_PROTECTED} ]];then
+        for path in ${profile_dir}/auth/gpg/*;do
+            fname=$(basename $path)
+            curl -o/dev/null -s -f -u "${WEB_PROTECTED}" -F path=${WEB_PROTECTED_PREFIX}${user}/${fname} -X POST \
+                -F file="@${path}" ${WEB_PROTECTED_URL} || { echo "Error uploading to ${WEB_PROTECTED_URL}"; exit 1 ;}
+            done
+    fi
+
+    if [[ -n ${S3_UPLOAD_BUCKET} ]];then
+        aws s3 mb s3://${S3_UPLOAD_BUCKET} 2>/dev/null >/dev/null || true
+        aws s3 cp --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read
+    fi
 }
 
 function cleandns() {
@@ -155,6 +159,8 @@ function main() {
         cleandns ${profile}
         recreate ${profile}
     fi
+    encrypt ${profile}
+    syncit ${profile}
 }
 
 if [[ -n ${EVERYONE} ]];then
