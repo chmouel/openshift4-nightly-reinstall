@@ -122,12 +122,17 @@ if __name__ == '__main__':
                         dest='silent',
                         help='Quiet')
 
+    parser.add_argument('-z',
+                        dest='dns_zone',
+                        default=DEVCLUSTER_DNS_ZONE,
+                        help='The devcluster DNS ZONE')
+
     parser.add_argument('clustername')
     args = parser.parse_args()
     aws_access_key_id, aws_secret_access_key = check_for_credential_file()
     route53 = boto.connect_route53(aws_access_key_id, aws_secret_access_key)
 
-    zonename = args.clustername + '.' + DEVCLUSTER_DNS_ZONE
+    zonename = args.clustername + '.' + args.dns_zone
 
     if not args.force:
         if not args.silent:
@@ -139,5 +144,5 @@ if __name__ == '__main__':
             sys.exit(0)
 
     delete_hosted_zone(zonename, args.silent)
-    delete_record(DEVCLUSTER_DNS_ZONE, "api." + zonename, args.silent)
-    delete_record(DEVCLUSTER_DNS_ZONE, "\\052.apps." + zonename, args.silent)
+    delete_record(args.dns_zone, "api." + zonename, args.silent)
+    delete_record(args.dns_zone, "\\052.apps." + zonename, args.silent)

@@ -147,9 +147,10 @@ function syncit() {
 }
 
 function cleandns() {
-	local domain
-	domain=$(python3 -c 'import sys,yaml;sys;x = yaml.load(sys.stdin.read(), Loader=yaml.SafeLoader);print(x["metadata"]["name"])' < configs/${1}.yaml)
-	python3 scripts/openshift-install-cleanup-route53.records.py -s -f ${domain}
+	local domain name
+	name=$(python3 -c 'import sys,yaml;sys;x = yaml.load(sys.stdin.read(), Loader=yaml.SafeLoader);print(x["metadata"]["name"])' < configs/${1}.yaml)
+    domain=$(python3 -c 'import sys,yaml;sys;x = yaml.load(sys.stdin.read(), Loader=yaml.SafeLoader);print(x["baseDomain"])' < configs/${1}.yaml)
+	python3 scripts/openshift-install-cleanup-route53.records.py -s -f ${name}  -z ${domain}
 }
 
 function main() {
