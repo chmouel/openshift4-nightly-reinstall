@@ -5,13 +5,16 @@ cd $(readlink -f $(dirname $(readlink -f $0)))
 OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
 SYNCONLY=
 EVERYONE=
+NODELETE=
 
-while getopts "ska" o; do
+while getopts "sKka" o; do
     case "${o}" in
         a)
             EVERYONE=yes;;
 		k)
 			DELETEONLY=yes;;
+        K)
+            NODELETE=yes;;
         s)
             SYNCONLY=yes;;
         *)
@@ -46,9 +49,9 @@ function setcreds() {
     local profile=$1
     [[ -n ${AWS_SHARED_CREDENTIALS_FILE} ]] && return
     if [[ -e $(dirname $0)/configs/${profile}.credentials ]];then
-        export AWS_SHARED_CREDENTIALS_FILE=$(dirname $0)/configs/${profile}.credentials
+        export AWS_SHARED_CREDENTIALS_FILE=$(readlink -f $(dirname $0)/configs/${profile}.credentials)
     else
-        export AWS_SHARED_CREDENTIALS_FILE=
+        unset AWS_SHARED_CREDENTIALS_FILE
     fi
 }
 
@@ -83,7 +86,7 @@ function recreate() {
 	}
 	echo "${profile}: $(date) :: start"
 
-	delete ${profile}
+	[[ -z ${NODELETE} ]] && delete ${profile} || rm -rf ${profile_dir}
 
 	[[ -n ${DELETEONLY} ]] && exit 0
 	mkdir -p ${profile_dir}
@@ -141,7 +144,6 @@ function syncit() {
     fi
 
     if [[ -n ${S3_UPLOAD_BUCKET} ]];then
-        aws s3 mb s3://${S3_UPLOAD_BUCKET} 2>/dev/null >/dev/null || true
         aws s3 cp --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read
     fi
 }
@@ -155,8 +157,8 @@ function cleandns() {
 
 function main() {
     local profile=$1
+    setcreds ${profile}
     if [[ -z ${SYNCONLY} ]];then
-        setcreds ${profile}
         cleandns ${profile}
         recreate ${profile}
     fi
