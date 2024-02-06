@@ -27,6 +27,8 @@ shift $((OPTIND-1))
 
 PROFILE=${1}
 S3_UPLOAD_BUCKET=
+S3_UPLOAD_CONFIG_FILE=
+export S3_UPLOAD_CONFIG_FILE S3_UPLOAD_BUCKET
 
 declare -A PROFILE_TO_GPG
 WEB=""
@@ -144,7 +146,14 @@ function syncit() {
     fi
 
     if [[ -n ${S3_UPLOAD_BUCKET} ]];then
-        aws s3 cp --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read
+        # (
+        #     [[ -n ${S3_UPLOAD_CONFIG_FILE} ]] && {
+        #         f=$(readlink -f ${S3_UPLOAD_CONFIG_FILE})
+        #         [[ -e ${f} ]] || { echo "$f cannot be found" ; exit 1;}
+        #         export AWS_CONFIG_FILE=${S3_UPLOAD_CONFIG_FILE}
+        #     }
+            aws s3 cp --recursive ${profile_dir}/auth/gpg s3://${S3_UPLOAD_BUCKET}/${user} --acl public-read
+        # )
     fi
 }
 
