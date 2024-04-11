@@ -1,3 +1,4 @@
+configs
 .old*
 binaries/kubectl
 binaries/olddownload.sh
