@@ -2,7 +2,7 @@
 # set -x
 set -e
 cd $(readlink -f $(dirname $(readlink -f $0)))
-OS4_BINARY=${OS4_BINARY:-"./binaries/openshift-install"}
+OS4_BINARY=${OS4_BINARY:-"./binaries/arm64/openshift-install"}
 SYNCONLY=
 EVERYONE=
 NODELETE=

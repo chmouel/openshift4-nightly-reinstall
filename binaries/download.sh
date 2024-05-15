@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Chmouel Boudjnah <chmouel@redhat.com>
 set -e
-[[ -z ${1} ]] && cd $(readlink -f $(dirname $(readlink -f $0)))
+cd $(readlink -f $(dirname $(readlink -f $0)))
 version=latest
+destdir=arm64
 base="ocp"
+arch=aarch64/
+binaryprefix="-amd64"
 [[ $1 == "-d" ]] && { base="ocp-dev-preview"  ; shift ;}
+[[ $1 == "-i" ]] && { binaryprefix=;arch=;destdir=x86;base="ocp"  ; shift ;}
 [[ -n ${1} ]] && version=${1}
-URL=https://mirror.openshift.com/pub/openshift-v4/clients/${base}/${version}
+URL=https://mirror.openshift.com/pub/openshift-v4/${arch}clients/${base}/${version}
+LURL=https://mirror.openshift.com/pub/openshift-v4/clients/${base}/${version}
 DEST=${DEST:-.}
 version=$(curl -s ${URL}/release.txt |sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
 
@@ -30,11 +35,16 @@ esac
 [[ -x ./oc ]] && ./oc version || true
 [[ -x ./openshift-install ]] && ./openshift-install version || true
 
-echo -n "Downloading openshift-clients-${version}: "
-curl -sL ${URL}/openshift-client-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- oc  && ln -sf oc kubectl
+DEST=${DEST}/${destdir}
+mkdir -p ${DEST}
+
+u=${LURL}/openshift-client-${platform}-${version}.tar.gz
+echo -n "Downloading $u"
+curl -sL ${u}|tar -C . -xz -f- oc  && ln -sf oc kubectl
 echo "Done."
-echo -n "Downloading openshift-installer-${version}: "
-curl -sL ${URL}/openshift-install-${platform}-${version}.tar.gz|tar -C ${DEST} -xz -f- openshift-install
+u=${URL}/openshift-install-${platform}${binaryprefix}-${version}.tar.gz
+echo -n "Downloading ${u}"
+curl -sL ${u}|tar -C ${DEST} -xz -f- openshift-install
 echo "Done."
 
 [[ -x ./oc ]] && ./oc version || true
