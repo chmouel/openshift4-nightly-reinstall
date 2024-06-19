@@ -1,6 +1,10 @@
 #!/bin/bash
 PATH=$PATH:$HOME/os4-build/binaries
 
+TMP=$(mktemp /tmp/.mm.XXXXXX)
+clean() { rm -f ${TMP}; }
+trap clean EXIT
+
 function install_operator() {
 	cat <<EOF | oc apply -f- >/dev/null
 apiVersion: operators.coreos.com/v1alpha1
@@ -35,7 +39,6 @@ function create_htpasswd_auth() {
 	password=${username_password#*:}
 
 	htpasswd -B -b -c $TMP $username $password
-
 	kubectl delete secret htpass-secret -n openshift-config || true
 	kubectl create secret generic htpass-secret --from-file=htpasswd=$TMP -n openshift-config
 	kubectl patch oauth cluster -n openshift-config --type merge --patch "spec:
@@ -60,7 +63,8 @@ function post_create_chmouel() {
 			echo "${KUBECONFIG} does not exist"
 			return
 		fi
-		# install_operator ${profile}
+		create_htpasswd_auth $HTPASS
+		install_operator $profile
 		install_le_ssl $profile
 	)
 }
