@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Author: Chmouel Boudjnah <chmouel@chmouel.com>
-set -euxfo pipefail
+set -eufo pipefail
 
 force=""
 genDomain() {
 	domain=$1
 	certificate=.lego/certificates/$domain.json
 	if [[ -n $force ]] || find $(dirname "$certificate") -name $(basename "$certificate") -mtime +75 -print | grep -q .; then
-		lego --domains $domain --domains "*.$domain" --email chmouel@chmouel.com --dns route53 --accept-tos=true run
+		lego --domains "*.apps.$domain" --email chmouel@chmouel.com --dns route53 --accept-tos=true run
 	fi
 }
 
