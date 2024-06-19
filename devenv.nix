@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, ... }:
 
 {
   packages = with pkgs; [
@@ -25,9 +25,4 @@
     export AWS_DEFAULT_REGION=$(aws configure get region)
     scripts/generate-ssl-cert.sh
   '';
-
-  # https://devenv.sh/processes/
-  # processes.ping.exec = "ping example.com";
-
-  # See full reference at https://devenv.sh/reference/options/
 }
