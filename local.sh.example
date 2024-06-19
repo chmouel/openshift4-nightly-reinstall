@@ -1,0 +1,66 @@
+#!/bin/bash
+PATH=$PATH:$HOME/os4-build/binaries
+
+function install_operator() {
+	cat <<EOF | oc apply -f- >/dev/null
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: pipelines
+  namespace: openshift-operators
+spec:
+  channel: latest
+  name: openshift-pipelines-operator-rh
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF
+}
+
+function install_le_ssl() {
+	local cert_file=./.lego/certificates/$1.devcluster.openshift.com.crt
+	local key_file=./.lego/certificates/$1.devcluster.openshift.com.key
+	if [ ! -f $cert_file ]; then
+		echo "No certificate found for $1"
+		return
+	fi
+	kubectl delete secret router-certs -n openshift-ingress 2>/dev/null || true
+	kubectl create secret tls router-certs --cert="${cert_file}" --key="${key_file}" -n openshift-ingress
+	kubectl patch ingresscontroller default -n openshift-ingress-operator --type=merge \
+		--patch='{"spec": { "defaultCertificate": { "name": "router-certs" }}}'
+}
+
+function create_htpasswd_auth() {
+	username_password=${1}
+	username=${username_password%:*}
+	password=${username_password#*:}
+
+	htpasswd -B -b -c $TMP $username $password
+
+	kubectl delete secret htpass-secret -n openshift-config || true
+	kubectl create secret generic htpass-secret --from-file=htpasswd=$TMP -n openshift-config
+	kubectl patch oauth cluster -n openshift-config --type merge --patch "spec:
+  identityProviders:
+  - htpasswd:
+      fileData:
+        name: htpass-secret
+    mappingMethod: claim
+    name: htpasswd
+    type: HTPasswd
+    " || true
+	oc adm policy add-cluster-role-to-user cluster-admin ${username}
+	kubectl delete secrets kubeadmin -n kube-system || true
+}
+
+function post_create_chmouel() {
+	local profile=chmouel
+	(
+		export KUBECONFIG
+		KUBECONFIG=$(readlink -f ./profiles/${profile}/auth/kubeconfig)
+		if [[ ! -e ${KUBECONFIG} ]]; then
+			echo "${KUBECONFIG} does not exist"
+			return
+		fi
+		# install_operator ${profile}
+		install_le_ssl $profile
+	)
+}
