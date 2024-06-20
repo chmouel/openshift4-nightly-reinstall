@@ -3,6 +3,7 @@
 {
   packages = with pkgs; [
     apacheHttpd
+    git
     openshift
     kubectl
     lego
