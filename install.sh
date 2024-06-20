@@ -183,6 +183,10 @@ function main() {
 	if [[ -z ${SYNCONLY} ]]; then
 		cleandns ${profile}
 		recreate ${profile}
+	else
+		if function_exists post_create_${profile}; then
+			post_create_${profile} || true
+		fi
 	fi
 	encrypt ${profile}
 	syncit ${profile}
