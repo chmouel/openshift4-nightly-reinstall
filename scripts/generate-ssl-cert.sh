@@ -21,7 +21,8 @@ if [[ -n ${1:-} ]]; then
 	genDomain $1
 	exit
 fi
-for file in $(fd -tf .json$ .lego/certificates); do
+
+find .lego/certificates -type f -name "*.json" | while read -r file; do
 	if [[ $file =~ /([^/]+)\.json$ ]]; then
 		domain=${BASH_REMATCH[1]}
 		genDomain $domain
