@@ -9,6 +9,7 @@
     lego
     awscli2
     apacheHttpd
+    fd
   ];
   languages.python = {
     enable = true;
