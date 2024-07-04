@@ -3,11 +3,11 @@ set -eux
 SUBJECT="${1}"
 TEXT="${2}"
 SLACK_WEBHOOK_URL=$3
-IMAGE_URL=https://upload.wikimedia.org/wikipedia/commons/d/d2/FIRE_BUGLES_-_2.4_%28GOLD%29.png
+IMAGE_URL=$4
 
 json=$(cat <<EOF
 {
-"text": "Pipelines as Code cluster has failed",
+"text": "${SUBJECT}",
 "attachments": [
   {
     "blocks": [
