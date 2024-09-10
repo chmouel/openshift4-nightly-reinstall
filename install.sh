@@ -141,12 +141,12 @@ function syncit() {
 	local user=$1
 	local profile_dir=${SD}/profiles/${user}
 
-	if [[ -n ${WEB:?} ]]; then
-		rm -rf ${WEB:?}/${user}
-		mkdir -p ${WEB:?}/${user}
-		cp -a ${profile_dir}/auth/* ${WEB:?}/${user}
-		rmdir ${WEB:?}/${user}/gpg
-		chmod a+r ${WEB:?}/${user}/*
+	if [[ -n ${WEB:-} ]]; then
+		rm -rf ${WEB}/${user}
+		mkdir -p ${WEB}/${user}
+		cp -a ${profile_dir}/auth/* ${WEB}/${user}
+		rmdir ${WEB}/${user}/gpg
+		chmod a+r ${WEB}/${user}/*
 	fi
 
 	if [[ -n ${WEB_PROTECTED_URL} && -n ${WEB_PROTECTED} ]]; then
