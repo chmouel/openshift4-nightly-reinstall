@@ -2,7 +2,7 @@
 # shellcheck disable=SC2015
 # set -x
 set -e
-cd $(readlink -f $(dirname $(readlink -f $0)))
+cd "$(readlink -f "$(dirname "$(readlink -f $0)")")"
 OS4_BINARY=${OS4_BINARY:-"./binaries/arm64/openshift-install"}
 SYNCONLY=
 EVERYONE=
@@ -54,14 +54,14 @@ source local.sh
 #[[ -z ${!PROFILE_TO_GPG[@]} ]] && { echo "You need the PROFILE_TO_GPG variable setup in your local.sh"; exit 1 ;}
 [[ -n ${WEB} ]] && [[ ! -d ${WEB} ]] && mkdir -p ${WEB}
 
-SD=$(readlink -f $(dirname $0))
+SD=$(readlink -f "$(dirname $0)")
 
 function setcreds() {
   local profile=$1
   [[ -n ${AWS_SHARED_CREDENTIALS_FILE} ]] && return
   if [[ -e $(dirname $0)/configs/${profile}.credentials ]]; then
     export AWS_SHARED_CREDENTIALS_FILE
-    AWS_SHARED_CREDENTIALS_FILE=$(readlink -f $(dirname $0)/configs/${profile}.credentials)
+    AWS_SHARED_CREDENTIALS_FILE=$(readlink -f "$(dirname $0)"/configs/${profile}.credentials)
   else
     unset AWS_SHARED_CREDENTIALS_FILE
   fi
@@ -82,7 +82,7 @@ function delete() {
   local profile_dir=${SD}/profiles/${profile}
   [[ -e ${profile_dir}/terraform.tfstate || -e ${profile_dir}/terraform.tfvars.json ]] && {
     function_exists pre_delete_${profile} && pre_delete_${profile} || true
-    timeout 30m $(os4_binary ${profile}) destroy cluster --dir ${profile_dir} --log-level=error || true
+    timeout 30m "$(os4_binary ${profile})" destroy cluster --dir ${profile_dir} --log-level=error || true
     function_exists post_delete_${profile} && post_delete_${profile} || true
   } || true
 }
@@ -91,7 +91,7 @@ function recreate() {
   local profile=$1
   local profile_dir=${SD}/profiles/${profile}
 
-  IC=$(readlink -f $(dirname $0)/configs/${profile}.yaml)
+  IC=$(readlink -f "$(dirname $0)/configs/${profile}.yaml")
   [[ -e ${IC} ]] || {
     echo "${IC} don't exist"
     exit
@@ -142,7 +142,7 @@ function syncit() {
   local profile_dir=${SD}/profiles/${user}
 
   if [[ -n ${WEB:-} ]]; then
-    rm -rf ${WEB}/${user}
+    rm -rf ${WEB:?}/${user}
     mkdir -p ${WEB}/${user}
     cp -a ${profile_dir}/auth/* ${WEB}/${user}
     rmdir ${WEB}/${user}/gpg
