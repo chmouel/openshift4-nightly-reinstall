@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copyright 2024 Chmouel Boudjnah <chmouel@chmouel.com>
 set -euxfo pipefail
-
+MAXWAITING_FOR_OPERATOR=150
 TMP=$(mktemp /tmp/.mm.XXXXXX)
 clean() { rm -f $TMP; }
 trap clean EXIT
@@ -57,7 +57,7 @@ EOF
 
 	i=0
 	while true; do
-		[[ ${i} == 120 ]] && exit 1
+		[[ ${i} == "${MAXWAITING_FOR_OPERATOR}" ]] && exit 1
 		ep=$(kubectl get ns openshift-pipelines || true)
 		[[ -n ${ep} ]] && break
 		sleep 5
@@ -67,7 +67,7 @@ EOF
 	i=0
 	for tt in tekton-pipelines-webhook tekton-triggers-webhook pipelines-as-code-controller pipelines-as-code-watcher; do
 		while true; do
-			[[ ${i} == 120 ]] && exit 1
+			[[ ${i} == "${MAXWAITING_FOR_OPERATOR}" ]] && exit 1
 			ep=$(kubectl get ep -n openshift-pipelines ${tt} -o jsonpath='{.subsets[*].addresses[*].ip}' || true)
 			[[ -n ${ep} ]] && break
 			sleep 5
