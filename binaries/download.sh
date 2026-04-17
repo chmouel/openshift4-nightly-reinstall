@@ -7,7 +7,7 @@ version=latest
 destdir=arm64
 base="ocp"
 arch=aarch64/
-binaryprefix="-amd64"
+binaryprefix=""
 [[ $1 == "-d" ]] && {
 	base="ocp-dev-preview"
 	shift
@@ -23,7 +23,7 @@ binaryprefix="-amd64"
 URL=https://mirror.openshift.com/pub/openshift-v4/${arch}clients/${base}/${version}
 LURL=https://mirror.openshift.com/pub/openshift-v4/clients/${base}/${version}
 DEST=${DEST:-.}
-version=$(curl -s ${URL}/release.txt | sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
+version=$(curl -L -s ${URL}/release.txt | sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
 
 [[ -z ${version} ]] && {
 	echo "Could not detect version"
@@ -49,7 +49,7 @@ esac
 DEST=${DEST}/${destdir}
 mkdir -p ${DEST}
 
-u=${LURL}/openshift-client-${platform}-${version}.tar.gz
+u=${URL}/openshift-client-${platform}-${version}.tar.gz
 echo -n "Downloading $u"
 curl -sL ${u} | tar -C . -xz -f- oc && ln -sf oc kubectl
 echo "Done."

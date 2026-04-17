@@ -1,4 +1,10 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env -S uv --quiet run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "boto3",
+# ]
+# ///
 # -*- coding: utf-8 -*-
 # Author: Chmouel Boudjnah <chmouel@chmouel.com>
 #
@@ -14,9 +20,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
-# Python script using the boto library to delete route53 zones and records,
-# cause the awscli seems too sucky with deletion (you need to pass a big xml
-# blob to it)
+# Python script using boto3 to delete route53 zones and records.
 #
 # You need the credentials setup with whatever means in ~/.aws or via env
 # variables.
@@ -28,11 +32,9 @@
 
 import argparse
 import sys
-import os
 
-import boto
+import boto3
 
-# Shoudl be static
 DEVCLUSTER_DNS_ZONE = 'devcluster.openshift.com.'
 
 
@@ -40,73 +42,98 @@ class NoGoZoneIsANogo(Exception):
     pass
 
 
-def delete_hosted_zone(zonename, silent):
-    zone = route53.get_zone(zonename)
-    if not zone:
+def get_hosted_zone_id(client, zonename):
+    if not zonename.endswith("."):
+        zonename += "."
+    resp = client.list_hosted_zones_by_name(DNSName=zonename, MaxItems="1")
+    for zone in resp["HostedZones"]:
+        if zone["Name"] == zonename:
+            return zone["Id"].split("/")[-1]
+    return None
+
+
+def delete_hosted_zone(client, zonename, silent):
+    if not zonename.endswith("."):
+        zonename += "."
+    zone_id = get_hosted_zone_id(client, zonename)
+    if not zone_id:
         if not silent:
             print("Could not find " + zonename)
         return
-    records = zone.get_records()
 
     if not silent:
         print("Deleting zone: " + zonename)
-    for rec in records:
-        if rec.type in ('NS', 'SOA'):
-            continue
-        zone.delete_record(rec)
-        if not silent:
-            print("\tdeleted record " + rec.name)
 
+    paginator = client.get_paginator("list_resource_record_sets")
+    for page in paginator.paginate(HostedZoneId=zone_id):
+        for rec in page["ResourceRecordSets"]:
+            if rec["Type"] in ("NS", "SOA"):
+                continue
+            client.change_resource_record_sets(
+                HostedZoneId=zone_id,
+                ChangeBatch={
+                    "Changes": [
+                        {
+                            "Action": "DELETE",
+                            "ResourceRecordSet": rec,
+                        }
+                    ]
+                },
+            )
+            if not silent:
+                print("\tdeleted record " + rec["Name"])
+
+    client.delete_hosted_zone(Id=zone_id)
     if not silent:
         print("Zone " + zonename + " has been deleted.")
-    zone.delete()
 
 
-def delete_record(zonename, recordname, silent):
+def delete_record(client, zonename, recordname, silent):
     if not zonename.endswith("."):
         zonename += "."
     if not recordname.endswith("."):
         recordname += "."
 
-    zone = route53.get_zone(zonename)
-    if not zone:
+    zone_id = get_hosted_zone_id(client, zonename)
+    if not zone_id:
         raise NoGoZoneIsANogo("Could not find zone for " + zonename)
 
-    record = zone.get_a(recordname)
+    try:
+        resp = client.list_resource_record_sets(
+            HostedZoneId=zone_id,
+            StartRecordName=recordname,
+            StartRecordType="A",
+            MaxItems="1",
+        )
+    except Exception:
+        if not silent:
+            print("Could not find record " + recordname)
+        return
+
+    record = None
+    for rec in resp["ResourceRecordSets"]:
+        if rec["Name"] == recordname and rec["Type"] == "A":
+            record = rec
+            break
+
     if not record:
         if not silent:
             print("Could not find record " + recordname)
         return
 
+    client.change_resource_record_sets(
+        HostedZoneId=zone_id,
+        ChangeBatch={
+            "Changes": [
+                {
+                    "Action": "DELETE",
+                    "ResourceRecordSet": record,
+                }
+            ]
+        },
+    )
     if not silent:
-        print("Record " + record.name + " has been deleted.")
-    zone.delete_a(record.name)
-
-
-def check_for_credential_file():
-    if 'AWS_SHARED_CREDENTIALS_FILE' not in os.environ:
-        return (None, None)
-    path = os.environ['AWS_SHARED_CREDENTIALS_FILE']
-    path = os.path.expanduser(path)
-    path = os.path.expandvars(path)
-    aws_access_key_id = None
-    aws_secret_access_key = None
-
-    if os.path.isfile(path):
-        fp = open(path)
-        lines = fp.readlines()
-        fp.close()
-        for line in lines:
-            if line[0] != '#':
-                if '=' in line:
-                    name, value = line.split('=', 1)
-                    if name.strip() == 'aws_access_key_id':
-                        value = value.strip()
-                        aws_access_key_id = value
-                    elif name.strip() == 'aws_secret_access_key':
-                        value = value.strip()
-                        aws_secret_access_key = value
-    return (aws_access_key_id, aws_secret_access_key)
+        print("Record " + record["Name"] + " has been deleted.")
 
 
 if __name__ == '__main__':
@@ -121,16 +148,14 @@ if __name__ == '__main__':
                         default=False,
                         dest='silent',
                         help='Quiet')
-
     parser.add_argument('-z',
                         dest='dns_zone',
                         default=DEVCLUSTER_DNS_ZONE,
                         help='The devcluster DNS ZONE')
-
     parser.add_argument('clustername')
     args = parser.parse_args()
-    aws_access_key_id, aws_secret_access_key = check_for_credential_file()
-    route53 = boto.connect_route53(aws_access_key_id, aws_secret_access_key)
+
+    client = boto3.client("route53")
 
     zonename = args.clustername + '.' + args.dns_zone
 
@@ -143,6 +168,6 @@ if __name__ == '__main__':
         if not reply or reply.lower() != 'y':
             sys.exit(0)
 
-    delete_hosted_zone(zonename, args.silent)
-    delete_record(args.dns_zone, "api." + zonename, args.silent)
-    delete_record(args.dns_zone, "\\052.apps." + zonename, args.silent)
+    delete_hosted_zone(client, zonename, args.silent)
+    delete_record(client, args.dns_zone, "api." + zonename, args.silent)
+    delete_record(client, args.dns_zone, "\\052.apps." + zonename, args.silent)
