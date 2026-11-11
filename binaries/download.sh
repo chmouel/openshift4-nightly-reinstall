@@ -20,8 +20,8 @@ binaryprefix=""
 	shift
 }
 [[ -n ${1} ]] && version=${1}
-URL=https://mirror.openshift.com/pub/openshift-v4/${arch}clients/${base}/${version}
-LURL=https://mirror.openshift.com/pub/openshift-v4/clients/${base}/${version}
+URL=https://mirror.openshift.com/pub/openshift-v5/${arch}clients/${base}/${version}
+LURL=https://mirror.openshift.com/pub/openshift-v5/clients/${base}/${version}
 DEST=${DEST:-.}
 version=$(curl -L -s ${URL}/release.txt | sed -n '/Version:/ { s/.*:[ ]*//; p ;}')
 
