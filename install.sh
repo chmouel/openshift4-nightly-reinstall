@@ -58,10 +58,24 @@ SD=$(readlink -f "$(dirname $0)")
 
 function setcreds() {
   local profile=$1
-  [[ -n ${AWS_SHARED_CREDENTIALS_FILE} ]] && return
-  if [[ -e $(dirname $0)/configs/${profile}.credentials ]]; then
+  # Keep credentials set by the caller, but not the temporary file written for
+  # a previous profile of this run.
+  [[ -n ${AWS_SHARED_CREDENTIALS_FILE} && ${AWS_SHARED_CREDENTIALS_FILE} != "${TMP_CREDS:-}" ]] && return
+  if [[ -e ${SD}/configs/${profile}.credentials ]]; then
     export AWS_SHARED_CREDENTIALS_FILE
-    AWS_SHARED_CREDENTIALS_FILE=$(readlink -f "$(dirname $0)"/configs/${profile}.credentials)
+    AWS_SHARED_CREDENTIALS_FILE=$(readlink -f "${SD}"/configs/${profile}.credentials)
+  elif function_exists aws_credentials; then
+    # local.sh prints the credentials file content, for example decrypted
+    # from a gpg file, so no plain-text keys sit in configs/.
+    if [[ -z ${TMP_CREDS:-} ]]; then
+      TMP_CREDS=$(mktemp)
+      trap 'rm -f "${TMP_CREDS}"' EXIT
+    fi
+    aws_credentials "${profile}" >"${TMP_CREDS}" || {
+      echo "aws_credentials from local.sh failed for ${profile}" >&2
+      exit 1
+    }
+    export AWS_SHARED_CREDENTIALS_FILE=${TMP_CREDS}
   else
     unset AWS_SHARED_CREDENTIALS_FILE
   fi

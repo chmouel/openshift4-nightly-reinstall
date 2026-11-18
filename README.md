@@ -135,4 +135,18 @@ function os4_add_htpasswd_auth() {
 ## Extra configs
 
 * You can have a file in config/${PROFILE}.credentials to use a different set of AWS credentials for that profile
+* Without that file, a `aws_credentials` function in `local.sh` can print the
+  credentials file content for a profile, it is written to a private temporary
+  file used as `AWS_SHARED_CREDENTIALS_FILE` and removed at exit. For example
+  to decrypt it from a gpg file:
+
+  ```bash
+  function aws_credentials() {
+    ~/GIT/pipelines-as-code-infra/secrets/print.sh -k "profiles.$1" \
+      ~/GIT/pipelines-as-code-infra/secrets/aws-credentials.yaml.gpg
+  }
+  ```
+
+  Hooks in `local.sh` that need the credentials, like `post_create_*`, can use
+  `${AWS_SHARED_CREDENTIALS_FILE}`.
 * You can have a file in config/${PROFILE}.openshift-install to use a different openshift installer binary  for that profile
